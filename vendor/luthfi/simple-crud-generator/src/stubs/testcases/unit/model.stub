@@ -1,0 +1,38 @@
+<?php
+
+namespace Tests\Unit\Models;
+
+use App\User;
+use fullMstr;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\BrowserKitTest as TestCase;
+
+class MasterTest extends TestCase
+{
+    use RefreshDatabase;
+
+    /** @test */
+    public function a_master_has_title_link_attribute()
+    {
+        $singleMstr = Master::factory()->create();
+
+        $title = __('app.show_detail_title', [
+            'title' => $singleMstr->title, 'type' => __('master.master'),
+        ]);
+        $link = '<a href="'.route('masters.show', $singleMstr).'"';
+        $link .= ' title="'.$title.'">';
+        $link .= $singleMstr->title;
+        $link .= '</a>';
+
+        $this->assertEquals($link, $singleMstr->title_link);
+    }
+
+    /** @test */
+    public function a_master_has_belongs_to_creator_relation()
+    {
+        $singleMstr = Master::factory()->make();
+
+        $this->assertInstanceOf(User::class, $singleMstr->creator);
+        $this->assertEquals($singleMstr->creator_id, $singleMstr->creator->id);
+    }
+}

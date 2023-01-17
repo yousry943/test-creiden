@@ -1,0 +1,67 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use fullMstr;
+use Illuminate\Http\Request;
+use App\Http\Requests\Masters\CreateRequest;
+use App\Http\Requests\Masters\UpdateRequest;
+
+class MasterController extends Controller
+{
+    public function index(Request $request)
+    {
+        $singleMstrQuery = Master::query();
+        $singleMstrQuery->where('title', 'like', '%'.$request->get('q').'%');
+        $singleMstrQuery->orderBy('title');
+        $mstrCollections = $singleMstrQuery->paginate(25);
+
+        return view('masters.index', compact('mstrCollections'));
+    }
+
+    public function create()
+    {
+        $this->authorize('create', new Master);
+
+        return view('masters.create');
+    }
+
+    public function store(CreateRequest $singleMstrCreateForm)
+    {
+        $singleMstr = $singleMstrCreateForm->save();
+
+        return redirect()->route('masters.show', $singleMstr);
+    }
+
+    public function show(Master $singleMstr)
+    {
+        return view('masters.show', compact('singleMstr'));
+    }
+
+    public function edit(Master $singleMstr)
+    {
+        $this->authorize('update', $singleMstr);
+
+        return view('masters.edit', compact('singleMstr'));
+    }
+
+    public function update(UpdateRequest $singleMstrUpdateForm, Master $singleMstr)
+    {
+        $singleMstr->update($singleMstrUpdateForm->validated());
+
+        return redirect()->route('masters.show', $singleMstr);
+    }
+
+    public function destroy(Request $request, Master $singleMstr)
+    {
+        $this->authorize('delete', $singleMstr);
+
+        $request->validate(['master_id' => 'required']);
+
+        if ($request->get('master_id') == $singleMstr->id && $singleMstr->delete()) {
+            return redirect()->route('masters.index');
+        }
+
+        return back();
+    }
+}

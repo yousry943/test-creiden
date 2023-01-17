@@ -1,0 +1,79 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use fullMstr;
+use Illuminate\Http\Request;
+
+class MasterController extends Controller
+{
+    public function index(Request $request)
+    {
+        $singleMstrQuery = Master::query();
+        $singleMstrQuery->where('title', 'like', '%'.$request->get('q').'%');
+        $singleMstrQuery->orderBy('title');
+        $mstrCollections = $singleMstrQuery->paginate(25);
+
+        return view('masters.index', compact('mstrCollections'));
+    }
+
+    public function create()
+    {
+        $this->authorize('create', new Master);
+
+        return view('masters.create');
+    }
+
+    public function store(Request $request)
+    {
+        $this->authorize('create', new Master);
+
+        $newMaster = $request->validate([
+            'title'       => 'required|max:60',
+            'description' => 'nullable|max:255',
+        ]);
+        $newMaster['creator_id'] = auth()->id();
+
+        $singleMstr = Master::create($newMaster);
+
+        return redirect()->route('masters.show', $singleMstr);
+    }
+
+    public function show(Master $singleMstr)
+    {
+        return view('masters.show', compact('singleMstr'));
+    }
+
+    public function edit(Master $singleMstr)
+    {
+        $this->authorize('update', $singleMstr);
+
+        return view('masters.edit', compact('singleMstr'));
+    }
+
+    public function update(Request $request, Master $singleMstr)
+    {
+        $this->authorize('update', $singleMstr);
+
+        $singleMstrData = $request->validate([
+            'title'       => 'required|max:60',
+            'description' => 'nullable|max:255',
+        ]);
+        $singleMstr->update($singleMstrData);
+
+        return redirect()->route('masters.show', $singleMstr);
+    }
+
+    public function destroy(Request $request, Master $singleMstr)
+    {
+        $this->authorize('delete', $singleMstr);
+
+        $request->validate(['master_id' => 'required']);
+
+        if ($request->get('master_id') == $singleMstr->id && $singleMstr->delete()) {
+            return redirect()->route('masters.index');
+        }
+
+        return back();
+    }
+}
